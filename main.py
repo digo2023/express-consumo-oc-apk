@@ -201,14 +201,20 @@ def fmt_qtd(v: float) -> str:
 
 
 def extrair_texto_pdf(caminho_pdf: str) -> str:
+    """Extrai texto do PDF usando pypdf, biblioteca mais leve e compatível com APK Android.
+    Evita pdfplumber/pandas/reportlab, que costumam quebrar a compilação no Buildozer.
+    """
     texto = ""
     try:
-        import pdfplumber
-        with pdfplumber.open(caminho_pdf) as pdf:
-            for page in pdf.pages:
+        from pypdf import PdfReader
+        reader = PdfReader(caminho_pdf)
+        for page in reader.pages:
+            try:
                 texto += (page.extract_text() or "") + "\n"
+            except Exception:
+                texto += "\n"
     except Exception as e:
-        raise RuntimeError(f"Falha ao ler PDF: {e}")
+        raise RuntimeError(f"Falha ao ler PDF com pypdf: {e}")
     return texto
 
 
@@ -377,45 +383,136 @@ def comparar_consumo_oc(consumo, oc):
     return faltantes, sobras, conferidos
 
 
+def _pdf_escape(texto):
+    return str(texto).replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)").replace("\r", " ").replace("\n", " ")
+
+
+def _quebrar_linha(texto, max_chars=110):
+    texto = str(texto)
+    partes = []
+    atual = ""
+    for palavra in texto.split():
+        if len(atual) + len(palavra) + 1 > max_chars:
+            if atual:
+                partes.append(atual)
+            atual = palavra
+        else:
+            atual = (atual + " " + palavra).strip()
+    if atual:
+        partes.append(atual)
+    return partes or [""]
+
+
 def gerar_pdf_tabela(titulo, subtitulo, linhas, colunas, caminho):
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import A4, landscape
-    from reportlab.lib.units import cm
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    """Gera PDF simples sem reportlab para aumentar compatibilidade com Buildozer/Android."""
+    largura = 842
+    altura = 595
+    margem_x = 28
+    y_inicial = 555
+    line_h = 12
+    max_linhas_pag = 38
 
-    doc = SimpleDocTemplate(caminho, pagesize=landscape(A4), rightMargin=0.8*cm, leftMargin=0.8*cm, topMargin=0.8*cm, bottomMargin=0.8*cm)
-    styles = getSampleStyleSheet()
-    title_style = ParagraphStyle("TitleExpress", parent=styles["Title"], fontSize=18, leading=22, alignment=1)
-    sub_style = ParagraphStyle("SubExpress", parent=styles["Normal"], fontSize=9, alignment=1)
-    cell_style = ParagraphStyle("Cell", parent=styles["Normal"], fontSize=7, leading=8)
+    def linha_texto(txt, x, y, size=8, bold=False):
+        fonte = "/F2" if bold else "/F1"
+        return f"BT {fonte} {size} Tf {x} {y} Td ({_pdf_escape(txt)}) Tj ET\n"
 
-    story = [Paragraph(titulo, title_style), Paragraph(subtitulo, sub_style), Spacer(1, 0.25*cm)]
-    dados = [[Paragraph(str(c), cell_style) for c in colunas]]
-    for i, row in enumerate(linhas, start=1):
-        dados.append([Paragraph(str(row.get(c, "")), cell_style) for c in colunas])
+    # Monta linhas textuais para evitar layout complexo no Android.
+    linhas_texto = []
+    linhas_texto.append(titulo)
+    linhas_texto.append(subtitulo)
+    linhas_texto.append(f"Gerado em {hoje_br()} - By Maicon")
+    linhas_texto.append("-" * 120)
+    linhas_texto.append(" | ".join(str(c).upper() for c in colunas))
+    linhas_texto.append("-" * 120)
 
-    tabela = Table(dados, repeatRows=1)
-    tabela.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#D9EAF7")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F6F8FA")]),
-    ]))
-    story.append(tabela)
-    story.append(Spacer(1, 0.25*cm))
-    story.append(Paragraph(f"{hoje_br()} - By Maicon", sub_style))
-    doc.build(story)
+    if not linhas:
+        linhas_texto.append("Nenhum item encontrado.")
+    else:
+        for idx, row in enumerate(linhas, start=1):
+            partes = []
+            for c in colunas:
+                valor = row.get(c, "")
+                if isinstance(valor, float):
+                    valor = fmt_qtd(valor)
+                partes.append(f"{str(c).upper()}: {valor}")
+            texto = f"{idx:03d}. " + " | ".join(partes)
+            linhas_texto.extend(_quebrar_linha(texto, 135))
+            linhas_texto.append("")
+
+    paginas = [linhas_texto[i:i+max_linhas_pag] for i in range(0, len(linhas_texto), max_linhas_pag)] or [[""]]
+    objects = []
+    pages_ids = []
+
+    # 1 Catalog, 2 Pages, 3 Font normal, 4 Font bold. Conteúdos e pages começam depois.
+    objects.append("<< /Type /Catalog /Pages 2 0 R >>")
+    objects.append("<< /Type /Pages /Kids [] /Count 0 >>")
+    objects.append("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
+    objects.append("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>")
+
+    for pi, page_lines in enumerate(paginas, start=1):
+        content = ""
+        y = y_inicial
+        content += linha_texto(titulo[:100], margem_x, y, 13, True); y -= 18
+        if pi == 1:
+            content += linha_texto(subtitulo[:130], margem_x, y, 8, False); y -= 16
+        else:
+            content += linha_texto(f"Continuação - página {pi}", margem_x, y, 8, False); y -= 16
+        for line in page_lines[3:] if pi == 1 else page_lines:
+            content += linha_texto(line[:150], margem_x, y, 7, False)
+            y -= line_h
+            if y < 35:
+                break
+        content += linha_texto(f"Página {pi}/{len(paginas)} - {hoje_br()} - By Maicon", 610, 22, 7, False)
+        stream = f"<< /Length {len(content.encode('latin-1', 'ignore'))} >>\nstream\n{content}\nendstream"
+        content_id = len(objects) + 1
+        objects.append(stream)
+        page_id = len(objects) + 1
+        pages_ids.append(page_id)
+        objects.append(f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {largura} {altura}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents {content_id} 0 R >>")
+
+    kids = " ".join(f"{pid} 0 R" for pid in pages_ids)
+    objects[1] = f"<< /Type /Pages /Kids [{kids}] /Count {len(pages_ids)} >>"
+
+    pdf = bytearray(b"%PDF-1.4\n")
+    offsets = [0]
+    for i, obj in enumerate(objects, start=1):
+        offsets.append(len(pdf))
+        pdf.extend(f"{i} 0 obj\n".encode("latin-1"))
+        pdf.extend(obj.encode("latin-1", "ignore"))
+        pdf.extend(b"\nendobj\n")
+    xref = len(pdf)
+    pdf.extend(f"xref\n0 {len(objects)+1}\n".encode("latin-1"))
+    pdf.extend(b"0000000000 65535 f \n")
+    for off in offsets[1:]:
+        pdf.extend(f"{off:010d} 00000 n \n".encode("latin-1"))
+    pdf.extend(f"trailer\n<< /Size {len(objects)+1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF".encode("latin-1"))
+
+    with open(caminho, "wb") as f:
+        f.write(pdf)
 
 
 def gerar_excel(conferidos, faltantes, sobras, caminho):
-    import pandas as pd
-    with pd.ExcelWriter(caminho, engine="openpyxl") as writer:
-        pd.DataFrame(conferidos).to_excel(writer, sheet_name="Conferencia", index=False)
-        pd.DataFrame(faltantes).to_excel(writer, sheet_name="Faltantes", index=False)
-        pd.DataFrame(sobras).to_excel(writer, sheet_name="Sobras", index=False)
+    from openpyxl import Workbook
+
+    def escrever_aba(wb, nome, dados):
+        ws = wb.create_sheet(nome)
+        if dados:
+            colunas = list(dados[0].keys())
+        else:
+            colunas = ["produto", "unidade", "necessario", "comprado", "faltante", "sobra", "data", "observacao"]
+        ws.append(colunas)
+        for item in dados:
+            ws.append([item.get(c, "") for c in colunas])
+        for col in ws.columns:
+            letra = col[0].column_letter
+            ws.column_dimensions[letra].width = min(max(len(str(cell.value or "")) for cell in col) + 2, 45)
+
+    wb = Workbook()
+    wb.remove(wb.active)
+    escrever_aba(wb, "Conferencia", conferidos)
+    escrever_aba(wb, "Faltantes", faltantes)
+    escrever_aba(wb, "Sobras", sobras)
+    wb.save(caminho)
 
 
 class RootUI(BoxLayout):
