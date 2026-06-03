@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 EXPRESS CONSUMO OC — By Maicon
-Versão Android corrigida para não usar URI content://tree como caminho comum.
+Versão Android profissional com armazenamento seguro, leitura de PDF e relatórios premium.
 """
 
 import os
@@ -23,130 +23,175 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.utils import platform
 
 KV = r'''
+#:import dp kivy.metrics.dp
+
+<PremiumButton@Button>:
+    size_hint_y: None
+    height: dp(58)
+    font_size: "17sp"
+    bold: True
+    color: 1, 1, 1, 1
+    background_normal: ""
+    background_down: ""
+    background_color: 0, 0, 0, 0
+    canvas.before:
+        Color:
+            rgba: 0.02, 0.23, 0.56, 1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(16),]
+        Color:
+            rgba: 0.12, 0.53, 0.95, 0.35
+        Line:
+            rounded_rectangle: self.x, self.y, self.width, self.height, dp(16)
+            width: 1.15
+
 <RootUI>:
     orientation: "vertical"
     padding: dp(14)
-    spacing: dp(8)
+    spacing: dp(10)
     canvas.before:
         Color:
-            rgba: 0.02, 0.04, 0.10, 1
+            rgba: 0.018, 0.030, 0.070, 1
         Rectangle:
             pos: self.pos
             size: self.size
+        Color:
+            rgba: 0.06, 0.12, 0.23, 0.92
+        RoundedRectangle:
+            pos: self.x + dp(8), self.top - dp(174)
+            size: self.width - dp(16), dp(160)
+            radius: [dp(24),]
+        Color:
+            rgba: 0.95, 0.66, 0.15, 0.85
+        Line:
+            points: self.x + dp(28), self.top - dp(166), self.right - dp(28), self.top - dp(166)
+            width: 1.2
 
     BoxLayout:
         orientation: "vertical"
         size_hint_y: None
-        height: dp(150)
+        height: dp(164)
+        padding: dp(8), dp(10), dp(8), dp(8)
         spacing: dp(4)
+
         Label:
             text: "EXPRESS CONSUMO OC"
-            font_size: "31sp"
+            font_size: "29sp"
             bold: True
             color: 1, 1, 1, 1
             halign: "center"
             valign: "middle"
             text_size: self.size
+
         Label:
             text: "Cálculo de Consumo • Conferência de Ordem de Compra"
-            font_size: "16sp"
+            font_size: "15sp"
             bold: True
-            color: 0.95, 0.65, 0.13, 1
+            color: 0.95, 0.67, 0.18, 1
             halign: "center"
             valign: "middle"
             text_size: self.size
+
+        Label:
+            text: "Relatórios profissionais • PDF e Excel • Armazenamento seguro"
+            font_size: "12sp"
+            color: 0.76, 0.82, 0.92, 1
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
         BoxLayout:
             size_hint_y: None
-            height: dp(42)
+            height: dp(44)
             spacing: dp(12)
             TextInput:
                 id: data_ini
                 text: root.data_inicio
-                hint_text: "dd/mm/aaaa"
+                hint_text: "Início"
                 multiline: False
                 font_size: "18sp"
+                halign: "center"
                 foreground_color: 1,1,1,1
-                background_color: 0,0,0,0
+                background_color: 0.03,0.07,0.14,0.92
                 cursor_color: 0.95,0.65,0.13,1
             TextInput:
                 id: data_fim
                 text: root.data_fim
-                hint_text: "dd/mm/aaaa"
+                hint_text: "Fim"
                 multiline: False
                 font_size: "18sp"
+                halign: "center"
                 foreground_color: 1,1,1,1
-                background_color: 0,0,0,0
+                background_color: 0.03,0.07,0.14,0.92
                 cursor_color: 0.95,0.65,0.13,1
 
-    Button:
-        text: "📄 Escolher PDF Analítico"
-        size_hint_y: None
-        height: dp(56)
-        font_size: "18sp"
-        bold: True
-        background_normal: ""
-        background_color: 0.02, 0.31, 0.72, 1
+    PremiumButton:
+        text: "Selecionar PDF Analítico"
         on_release: root.escolher_analitico()
 
-    Button:
-        text: "🧾 Escolher PDF Ordem de Compra"
-        size_hint_y: None
-        height: dp(56)
-        font_size: "18sp"
-        bold: True
-        background_normal: ""
-        background_color: 0.02, 0.31, 0.72, 1
+    PremiumButton:
+        text: "Selecionar PDF Ordem de Compra"
         on_release: root.escolher_oc()
 
-    Button:
-        text: "📁 Usar pasta automática segura"
-        size_hint_y: None
-        height: dp(56)
-        font_size: "18sp"
-        bold: True
-        background_normal: ""
-        background_color: 0.02, 0.31, 0.72, 1
+    PremiumButton:
+        text: "Pasta automática segura"
         on_release: root.definir_pasta_automatica()
 
-    Button:
-        text: "📊 Gerar consumo semanal"
-        size_hint_y: None
-        height: dp(56)
-        font_size: "18sp"
-        bold: True
-        background_normal: ""
-        background_color: 0.02, 0.31, 0.72, 1
+    PremiumButton:
+        text: "Criar consumo semanal"
         on_release: root.gerar_consumo()
 
-    Button:
-        text: "✅ Conferir Ordem de Compra"
-        size_hint_y: None
-        height: dp(56)
-        font_size: "18sp"
-        bold: True
-        background_normal: ""
-        background_color: 0.02, 0.31, 0.72, 1
+    PremiumButton:
+        text: "Conferir Ordem de Compra"
         on_release: root.conferir_oc()
 
-    ScrollView:
-        do_scroll_x: False
+    BoxLayout:
+        orientation: "vertical"
+        padding: dp(12)
+        spacing: dp(4)
+        canvas.before:
+            Color:
+                rgba: 0.035, 0.055, 0.105, 0.96
+            RoundedRectangle:
+                pos: self.pos
+                size: self.size
+                radius: [dp(18),]
+            Color:
+                rgba: 0.95, 0.67, 0.18, 0.18
+            Line:
+                rounded_rectangle: self.x, self.y, self.width, self.height, dp(18)
+                width: 1
         Label:
-            id: status
-            text: root.status
+            text: "STATUS OPERACIONAL"
             size_hint_y: None
-            height: max(self.texture_size[1] + dp(30), dp(220))
-            font_size: "14sp"
-            color: 0.88, 0.90, 0.95, 1
+            height: dp(24)
+            font_size: "12sp"
+            bold: True
+            color: 0.95, 0.67, 0.18, 1
             halign: "left"
-            valign: "top"
-            text_size: self.width, None
+            valign: "middle"
+            text_size: self.size
+        ScrollView:
+            do_scroll_x: False
+            Label:
+                id: status
+                text: root.status
+                size_hint_y: None
+                height: max(self.texture_size[1] + dp(30), dp(180))
+                font_size: "13sp"
+                color: 0.90, 0.93, 0.98, 1
+                halign: "left"
+                valign: "top"
+                text_size: self.width, None
 
     Label:
         text: root.rodape
         size_hint_y: None
         height: dp(26)
-        font_size: "14sp"
-        color: 0.72, 0.74, 0.80, 1
+        font_size: "13sp"
+        color: 0.72, 0.76, 0.84, 1
         halign: "right"
         valign: "middle"
         text_size: self.size
@@ -403,67 +448,120 @@ def _quebrar_linha(texto, max_chars=110):
     return partes or [""]
 
 
+
+def _pdf_color(r, g, b, stroke=False):
+    op = "RG" if stroke else "rg"
+    return f"{r:.3f} {g:.3f} {b:.3f} {op}\n"
+
+
+def _pdf_rect(x, y, w, h, fill=True):
+    return f"{x:.2f} {y:.2f} {w:.2f} {h:.2f} re {'f' if fill else 'S'}\n"
+
+
+def _pdf_line(x1, y1, x2, y2, width=0.6):
+    return f"{width:.2f} w {x1:.2f} {y1:.2f} m {x2:.2f} {y2:.2f} l S\n"
+
+
+def _pdf_text(txt, x, y, size=8, bold=False, r=0.05, g=0.07, b=0.12):
+    fonte = "/F2" if bold else "/F1"
+    safe = _pdf_escape(txt)
+    return _pdf_color(r, g, b) + f"BT {fonte} {size} Tf {x:.2f} {y:.2f} Td ({safe}) Tj ET\n"
+
+
+def _truncate(txt, max_chars):
+    txt = str(txt or "")
+    return txt if len(txt) <= max_chars else txt[:max(0, max_chars-1)] + "…"
+
+
 def gerar_pdf_tabela(titulo, subtitulo, linhas, colunas, caminho):
-    """Gera PDF simples sem reportlab para aumentar compatibilidade com Buildozer/Android."""
+    """Cria PDF profissional sem dependências nativas pesadas, compatível com APK Android."""
     largura = 842
     altura = 595
-    margem_x = 28
-    y_inicial = 555
-    line_h = 12
-    max_linhas_pag = 38
+    margem = 28
+    header_h = 78
+    footer_h = 30
+    table_top = altura - header_h - 18
+    row_h = 20
+    head_h = 22
 
-    def linha_texto(txt, x, y, size=8, bold=False):
-        fonte = "/F2" if bold else "/F1"
-        return f"BT {fonte} {size} Tf {x} {y} Td ({_pdf_escape(txt)}) Tj ET\n"
+    # Larguras planejadas para relatórios operacionais em A4 paisagem.
+    default_widths = {
+        "PRODUTO": 230,
+        "UN": 35,
+        "NECESSÁRIO": 72,
+        "COMPRADO": 72,
+        "FALTANTE": 72,
+        "SOBRA": 70,
+        "DATA": 70,
+        "TURNO": 55,
+        "OBSERVAÇÃO": 190,
+    }
+    usable = largura - margem * 2
+    widths = [default_widths.get(c, 95) for c in colunas]
+    total = sum(widths)
+    if total > usable:
+        scale = usable / total
+        widths = [max(30, w * scale) for w in widths]
 
-    # Monta linhas textuais para evitar layout complexo no Android.
-    linhas_texto = []
-    linhas_texto.append(titulo)
-    linhas_texto.append(subtitulo)
-    linhas_texto.append(f"Gerado em {hoje_br()} - By Maicon")
-    linhas_texto.append("-" * 120)
-    linhas_texto.append(" | ".join(str(c).upper() for c in colunas))
-    linhas_texto.append("-" * 120)
+    # Paginação.
+    rows_per_page = int((table_top - footer_h - head_h) // row_h)
+    data = linhas or [{colunas[0]: "Nenhum item encontrado."}]
+    paginas = [data[i:i+rows_per_page] for i in range(0, len(data), rows_per_page)] or [[]]
 
-    if not linhas:
-        linhas_texto.append("Nenhum item encontrado.")
-    else:
-        for idx, row in enumerate(linhas, start=1):
-            partes = []
-            for c in colunas:
-                valor = row.get(c, "")
-                if isinstance(valor, float):
-                    valor = fmt_qtd(valor)
-                partes.append(f"{str(c).upper()}: {valor}")
-            texto = f"{idx:03d}. " + " | ".join(partes)
-            linhas_texto.extend(_quebrar_linha(texto, 135))
-            linhas_texto.append("")
-
-    paginas = [linhas_texto[i:i+max_linhas_pag] for i in range(0, len(linhas_texto), max_linhas_pag)] or [[""]]
     objects = []
     pages_ids = []
-
-    # 1 Catalog, 2 Pages, 3 Font normal, 4 Font bold. Conteúdos e pages começam depois.
     objects.append("<< /Type /Catalog /Pages 2 0 R >>")
     objects.append("<< /Type /Pages /Kids [] /Count 0 >>")
     objects.append("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
     objects.append("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>")
 
-    for pi, page_lines in enumerate(paginas, start=1):
-        content = ""
-        y = y_inicial
-        content += linha_texto(titulo[:100], margem_x, y, 13, True); y -= 18
-        if pi == 1:
-            content += linha_texto(subtitulo[:130], margem_x, y, 8, False); y -= 16
-        else:
-            content += linha_texto(f"Continuação - página {pi}", margem_x, y, 8, False); y -= 16
-        for line in page_lines[3:] if pi == 1 else page_lines:
-            content += linha_texto(line[:150], margem_x, y, 7, False)
-            y -= line_h
-            if y < 35:
-                break
-        content += linha_texto(f"Página {pi}/{len(paginas)} - {hoje_br()} - By Maicon", 610, 22, 7, False)
-        stream = f"<< /Length {len(content.encode('latin-1', 'ignore'))} >>\nstream\n{content}\nendstream"
+    for pi, page_rows in enumerate(paginas, start=1):
+        c = ""
+        # Fundo e cabeçalho
+        c += _pdf_color(0.985, 0.988, 0.994) + _pdf_rect(0, 0, largura, altura)
+        c += _pdf_color(0.02, 0.04, 0.10) + _pdf_rect(0, altura-header_h, largura, header_h)
+        c += _pdf_color(0.95, 0.66, 0.16) + _pdf_rect(0, altura-header_h, 7, header_h)
+        c += _pdf_text("EXPRESS COLORADO", margem, altura-30, 10, True, 0.95, 0.66, 0.16)
+        c += _pdf_text(titulo[:90], margem, altura-52, 18, True, 1, 1, 1)
+        c += _pdf_text(subtitulo[:130], margem, altura-68, 8.5, False, 0.82, 0.88, 0.96)
+        c += _pdf_text(f"Criado em {hoje_br()} - By Maicon", largura-180, altura-30, 8.5, False, 0.88, 0.90, 0.95)
+        c += _pdf_color(0.95, 0.66, 0.16) + _pdf_rect(margem, altura-header_h-5, largura-margem*2, 2.2)
+
+        # Cabeçalho da tabela
+        y = table_top
+        x = margem
+        c += _pdf_color(0.07, 0.18, 0.36) + _pdf_rect(margem, y-head_h+2, usable, head_h)
+        for col, w in zip(colunas, widths):
+            c += _pdf_text(_truncate(str(col).upper(), int(w/4.2)), x+4, y-12, 6.7, True, 1, 1, 1)
+            x += w
+        c += _pdf_color(0.95, 0.66, 0.16) + _pdf_rect(margem, y-head_h+1, usable, 1.2)
+        y -= head_h
+
+        # Linhas
+        for idx, row in enumerate(page_rows, start=1+(pi-1)*rows_per_page):
+            fill = (0.96, 0.975, 0.995) if idx % 2 == 0 else (1, 1, 1)
+            c += _pdf_color(*fill) + _pdf_rect(margem, y-row_h+2, usable, row_h)
+            x = margem
+            for col, w in zip(colunas, widths):
+                val = row.get(col, "")
+                val = fmt_qtd(val) if isinstance(val, float) else str(val)
+                maxc = max(4, int(w / 4.1))
+                bold = col in ("FALTANTE", "SOBRA") and val not in ("", "0", "0,0", "0,00")
+                color = (0.58, 0.05, 0.06) if col == "FALTANTE" and bold else (0.05, 0.07, 0.12)
+                if col == "SOBRA" and bold:
+                    color = (0.02, 0.32, 0.18)
+                c += _pdf_text(_truncate(val, maxc), x+4, y-11.5, 6.5, bold, *color)
+                x += w
+            c += _pdf_color(0.82, 0.86, 0.92, True) + _pdf_line(margem, y-row_h+2, margem+usable, y-row_h+2, 0.25)
+            y -= row_h
+
+        # Rodapé
+        c += _pdf_color(0.02, 0.04, 0.10) + _pdf_rect(0, 0, largura, footer_h)
+        c += _pdf_text(f"Página {pi}/{len(paginas)}", margem, 12, 7.5, False, 0.82, 0.86, 0.94)
+        c += _pdf_text(f"{hoje_br()} - By Maicon", largura-135, 12, 7.5, False, 0.82, 0.86, 0.94)
+
+        stream_bytes = c.encode("latin-1", "ignore")
+        stream = f"<< /Length {len(stream_bytes)} >>\nstream\n".encode("latin-1") + stream_bytes + b"\nendstream"
         content_id = len(objects) + 1
         objects.append(stream)
         page_id = len(objects) + 1
@@ -478,7 +576,10 @@ def gerar_pdf_tabela(titulo, subtitulo, linhas, colunas, caminho):
     for i, obj in enumerate(objects, start=1):
         offsets.append(len(pdf))
         pdf.extend(f"{i} 0 obj\n".encode("latin-1"))
-        pdf.extend(obj.encode("latin-1", "ignore"))
+        if isinstance(obj, bytes):
+            pdf.extend(obj)
+        else:
+            pdf.extend(obj.encode("latin-1", "ignore"))
         pdf.extend(b"\nendobj\n")
     xref = len(pdf)
     pdf.extend(f"xref\n0 {len(objects)+1}\n".encode("latin-1"))
@@ -493,19 +594,58 @@ def gerar_pdf_tabela(titulo, subtitulo, linhas, colunas, caminho):
 
 def gerar_excel(conferidos, faltantes, sobras, caminho):
     from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    header_fill = PatternFill("solid", fgColor="0B1F3A")
+    gold_fill = PatternFill("solid", fgColor="F2A51A")
+    alt_fill = PatternFill("solid", fgColor="F4F7FB")
+    white_font = Font(color="FFFFFF", bold=True)
+    title_font = Font(color="0B1F3A", bold=True, size=14)
+    thin = Side(style="thin", color="D7DDE8")
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
 
     def escrever_aba(wb, nome, dados):
         ws = wb.create_sheet(nome)
+        ws.append(["EXPRESS COLORADO"])
+        ws.append([f"{nome.upper()} - Criado em {hoje_br()} - By Maicon"])
+        ws.append([])
         if dados:
             colunas = list(dados[0].keys())
         else:
             colunas = ["produto", "unidade", "necessario", "comprado", "faltante", "sobra", "data", "observacao"]
-        ws.append(colunas)
+        ws.append([c.upper() for c in colunas])
+        header_row = ws.max_row
         for item in dados:
             ws.append([item.get(c, "") for c in colunas])
-        for col in ws.columns:
-            letra = col[0].column_letter
-            ws.column_dimensions[letra].width = min(max(len(str(cell.value or "")) for cell in col) + 2, 45)
+
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=max(1, len(colunas)))
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=max(1, len(colunas)))
+        ws["A1"].font = title_font
+        ws["A2"].font = Font(color="6B7280", bold=True)
+        ws["A1"].fill = gold_fill
+        ws["A1"].alignment = Alignment(horizontal="center")
+        ws["A2"].alignment = Alignment(horizontal="center")
+
+        for cell in ws[header_row]:
+            cell.fill = header_fill
+            cell.font = white_font
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            cell.border = border
+        for row in ws.iter_rows(min_row=header_row+1):
+            if row[0].row % 2 == 0:
+                for cell in row:
+                    cell.fill = alt_fill
+            for cell in row:
+                cell.border = border
+                cell.alignment = Alignment(vertical="center", wrap_text=True)
+        ws.freeze_panes = f"A{header_row+1}"
+        ws.auto_filter.ref = ws.dimensions
+        for idx, col in enumerate(ws.columns, start=1):
+            max_len = 12
+            for cell in col:
+                max_len = max(max_len, len(str(cell.value or "")))
+            ws.column_dimensions[get_column_letter(idx)].width = min(max_len + 2, 42)
 
     wb = Workbook()
     wb.remove(wb.active)
@@ -516,7 +656,7 @@ def gerar_excel(conferidos, faltantes, sobras, caminho):
 
 
 class RootUI(BoxLayout):
-    status = StringProperty("Pronto. Escolha os PDFs e gere os relatórios.\n")
+    status = StringProperty("Pronto. Selecione os PDFs e crie os relatórios profissionais.\n")
     data_inicio = StringProperty("11/06/2026")
     data_fim = StringProperty("17/06/2026")
     rodape = StringProperty(f"{hoje_br()} - By Maicon")
@@ -634,7 +774,7 @@ class RootUI(BoxLayout):
     def _gerar_consumo_exec(self):
         try:
             self.busy = True
-            self.set_status("Processando consumo semanal...")
+            self.set_status("Criando consumo semanal...")
             if not self.analitico_path:
                 raise RuntimeError("Escolha primeiro o PDF Analítico.")
             di, df = self._datas_tela()
@@ -660,7 +800,7 @@ class RootUI(BoxLayout):
                 ["PRODUTO", "UN", "NECESSÁRIO", "DATA", "TURNO", "OBSERVAÇÃO"],
                 caminho_pdf,
             )
-            self.set_status(f"Consumo semanal gerado com sucesso.\n\nItens extraídos: {len(itens)}\nArquivo:\n{caminho_pdf}")
+            self.set_status(f"Consumo semanal criado com sucesso.\n\nItens extraídos: {len(itens)}\nArquivo criado:\n{caminho_pdf}")
         except Exception as e:
             self.set_status(f"ERRO ao gerar consumo semanal:\n{e}\n\nDetalhe técnico:\n{traceback.format_exc()[-1200:]}")
         finally:
@@ -733,9 +873,9 @@ class RootUI(BoxLayout):
                 f"Itens OC: {len(oc)}\n"
                 f"Faltantes: {max(0, len(faltantes))}\n"
                 f"Sobras/excedentes: {max(0, len(sobras))}\n\n"
-                f"PDF faltantes:\n{faltantes_pdf}\n\n"
-                f"PDF sobras:\n{sobras_pdf}\n\n"
-                f"Excel conferência:\n{excel}"
+                f"PDF faltantes criado:\n{faltantes_pdf}\n\n"
+                f"PDF sobras criado:\n{sobras_pdf}\n\n"
+                f"Excel conferência criado:\n{excel}"
             )
         except Exception as e:
             self.set_status(f"ERRO na conferência:\n{e}\n\nDetalhe técnico:\n{traceback.format_exc()[-1400:]}")

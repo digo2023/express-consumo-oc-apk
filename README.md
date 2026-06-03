@@ -1,59 +1,28 @@
-# EXPRESS CONSUMO OC — APK Android
+# EXPRESS CONSUMO OC — V1.4 Premium
 
-Aplicativo Android em Kivy para:
+Aplicativo Android para cálculo de consumo semanal e conferência de Ordem de Compra.
 
-- Selecionar PDF Analítico
-- Selecionar PDF de Ordem de Compra
-- Gerar consumo semanal
-- Conferir Consumo Necessário x Ordem de Compra
-- Gerar PDF de faltantes, PDF de sobras e Excel de conferência
+## Melhorias da V1.4
 
-## Correção principal desta versão
+- Correção do erro `preadv/pwritev` no Buildozer usando `android.minapi = 28` e `android.ndk_api = 28`.
+- Workflow GitHub Actions com limpeza de cache antigo e log completo em caso de falha.
+- Visual do app reformulado com aparência mais moderna e profissional.
+- Relatórios em PDF com cabeçalho premium, rodapé, tabela profissional e texto padrão `Criado em`.
+- Excel de conferência com abas formatadas, cabeçalho, filtro, congelamento de painel e estilo profissional.
+- Mantida a correção de segurança para Android: o app copia arquivos `content://` para cache interno antes de processar.
 
-Esta versão corrige o erro:
+## Arquivos principais
 
-```text
-Invalid URI: content://com.android.externalstorage.documents/tree/...
-```
+- `main.py`: aplicativo Kivy.
+- `buildozer.spec`: configuração Android.
+- `.github/workflows/build-apk.yml`: geração do APK no GitHub Actions.
+- `assets/icon.png`: ícone.
+- `assets/presplash.png`: tela inicial.
 
-O app não tenta mais salvar relatório diretamente em URI `content://tree`. Agora ele:
+## APK
 
-1. Copia PDFs escolhidos via Android para o cache interno do aplicativo.
-2. Gera relatórios em pasta interna segura do app.
-3. Evita usar `content://` como caminho de arquivo comum.
-4. Mostra mensagens de erro mais claras.
+Após subir no GitHub, acesse:
 
-## Pasta de saída
+`Actions > Gerar APK Android > Run workflow`
 
-No Android, os relatórios são salvos automaticamente na pasta interna do aplicativo:
-
-```text
-/data/user/0/org.maicon.expressconsumooc/files/relatorios
-```
-
-A tela mostra o caminho gerado. Para compartilhar/exportar, pode ser adicionada futuramente uma função com Android Share Sheet.
-
-## Como gerar o APK pelo GitHub Actions
-
-1. Crie um repositório no GitHub.
-2. Envie todos os arquivos deste projeto.
-3. Abra a aba **Actions**.
-4. Execute o workflow **Build APK Android**.
-5. Baixe o APK em **Artifacts**.
-
-## Comandos pelo Termux
-
-```bash
-pkg update -y
-pkg install git -y
-
-git config --global user.name "Maicon Rodrigo Pimentel"
-git config --global user.email "digomaicon2023@gmail.com"
-
-git init
-git add .
-git commit -m "Versao corrigida Express Consumo OC APK"
-git branch -M main
-git remote add origin https://github.com/SEU_USUARIO/SEU_REPOSITORIO.git
-git push -u origin main
-```
+Quando finalizar com sucesso, baixe o APK em `Artifacts`.

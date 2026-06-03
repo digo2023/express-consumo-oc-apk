@@ -11,7 +11,7 @@ jobs:
   build:
     name: Build APK
     runs-on: ubuntu-22.04
-    timeout-minutes: 120
+    timeout-minutes: 150
 
     steps:
       - name: Baixar código
@@ -23,6 +23,8 @@ jobs:
           ls -la
           test -f buildozer.spec
           test -f main.py
+          grep -n "android.minapi" buildozer.spec
+          grep -n "android.ndk_api" buildozer.spec
 
       - name: Instalar dependências do sistema
         run: |
@@ -33,14 +35,19 @@ jobs:
             libtinfo5 cmake libffi-dev libssl-dev build-essential \
             ccache gettext
 
-      - name: Instalar Buildozer
+      - name: Preparar Python e Buildozer
         run: |
           python3 -m pip install --upgrade pip setuptools wheel
           python3 -m pip install buildozer==1.5.0 cython==0.29.36 virtualenv
+          python3 -m pip install "python-for-android==2024.01.21"
+          buildozer --version
+          python3 -m pythonforandroid.toolchain --version || true
 
-      - name: Limpar cache antigo do Buildozer
+      - name: Limpar cache antigo do Android/Buildozer
         run: |
           rm -rf .buildozer
+          rm -rf ~/.buildozer/android/platform/build-*
+          rm -rf ~/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin || true
 
       - name: Criar APK Debug
         run: |
@@ -53,18 +60,18 @@ jobs:
           echo "Arquivos APK encontrados:"
           find . -name "*.apk" -type f || true
           echo "Últimas linhas do log:"
-          tail -n 120 buildozer_full.log || true
+          tail -n 160 buildozer_full.log || true
 
       - name: Enviar APK como artefato
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: express-consumo-oc-v1-3-debug-apk
+          name: express-consumo-oc-v1-4-premium-debug-apk
           path: bin/*.apk
 
       - name: Enviar log se falhar
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: buildozer-full-log
+          name: buildozer-full-log-v1-4
           path: buildozer_full.log
