@@ -1,0 +1,79 @@
+name: Gerar APK Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Conferir estrutura do projeto
+        run: |
+          pwd
+          ls -la
+          test -f buildozer.spec
+          test -f main.py
+          grep -n "requirements" buildozer.spec
+          grep -n "p4a.branch" buildozer.spec
+          grep -n "android.minapi" buildozer.spec
+          grep -n "android.ndk_api" buildozer.spec
+
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git zip unzip openjdk-17-jdk python3-pip python3-setuptools python3-wheel \
+            autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev \
+            libtinfo5 cmake libffi-dev libssl-dev build-essential ccache gettext
+
+      - name: Preparar Buildozer estável
+        run: |
+          python3 -m pip install --upgrade "pip<25" setuptools wheel
+          python3 -m pip uninstall -y buildozer python-for-android Cython cython sh || true
+          python3 -m pip install "Cython==0.29.36" "sh==1.14.3" "buildozer==1.5.0"
+          buildozer --version
+          cython --version
+          python3 - <<'PY'
+          import sh
+          print('sh', sh.__version__)
+          PY
+
+      - name: Limpar builds antigos para evitar cache corrompido
+        run: |
+          rm -rf .buildozer ~/.buildozer bin
+
+      - name: Criar APK Debug
+        run: |
+          buildozer android debug 2>&1 | tee buildozer_full.log
+
+      - name: Listar APK criado
+        if: always()
+        run: |
+          echo "Arquivos APK encontrados:"
+          find . -name "*.apk" -type f -print || true
+          echo "Últimas 160 linhas do log:"
+          tail -n 160 buildozer_full.log || true
+
+      - name: Enviar APK como artefato
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: express-consumo-oc-v1-5-premium-finalfix-apk
+          path: bin/*.apk
+
+      - name: Enviar log completo se falhar
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildozer-full-log-v1-5
+          path: buildozer_full.log
