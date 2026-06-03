@@ -38,6 +38,10 @@ jobs:
           python3 -m pip install --upgrade pip setuptools wheel
           python3 -m pip install buildozer==1.5.0 cython==0.29.36 virtualenv
 
+      - name: Limpar cache antigo do Buildozer
+        run: |
+          rm -rf .buildozer
+
       - name: Criar APK Debug
         run: |
           set -o pipefail
@@ -55,7 +59,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: express-consumo-oc-v1-2-debug-apk
+          name: express-consumo-oc-v1-3-debug-apk
           path: bin/*.apk
 
       - name: Enviar log se falhar
