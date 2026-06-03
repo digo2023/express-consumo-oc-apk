@@ -1,0 +1,68 @@
+name: Gerar APK Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências do sistema
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            python3 \
+            python3-pip \
+            python3-setuptools \
+            python3-wheel \
+            git \
+            zip \
+            unzip \
+            openjdk-17-jdk \
+            autoconf \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            cmake \
+            libffi-dev \
+            libssl-dev
+
+      - name: Instalar Buildozer e Cython
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install buildozer cython==0.29.36
+
+      - name: Cache Buildozer
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer
+            .buildozer
+          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+
+      - name: Gerar APK Debug
+        run: |
+          buildozer android debug
+
+      - name: Listar arquivos gerados
+        run: |
+          echo "Arquivos gerados:"
+          find . -name "*.apk" -type f
+
+      - name: Enviar APK como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: express-consumo-oc-apk-debug
+          path: bin/*.apk
