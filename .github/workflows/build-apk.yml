@@ -1,68 +1,44 @@
-name: Gerar APK Android
+name: Build APK Android
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-      - master
+    branches: [ main, master ]
 
 jobs:
   build:
-    name: Build APK
     runs-on: ubuntu-22.04
+    timeout-minutes: 90
 
     steps:
-      - name: Baixar código
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Instalar dependências do sistema
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            python3 \
-            python3-pip \
-            python3-setuptools \
-            python3-wheel \
-            git \
-            zip \
-            unzip \
-            openjdk-17-jdk \
-            autoconf \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo5 \
-            cmake \
-            libffi-dev \
-            libssl-dev
-
-      - name: Instalar Buildozer e Cython
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install buildozer cython==0.29.36
-
-      - name: Cache Buildozer
-        uses: actions/cache@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          path: |
-            ~/.buildozer
-            .buildozer
-          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          python-version: '3.11'
 
-      - name: Gerar APK Debug
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git zip unzip openjdk-17-jdk python3-pip autoconf libtool \
+            pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev \
+            libtinfo5 cmake libffi-dev libssl-dev build-essential \
+            ccache gettext
+
+      - name: Install Buildozer
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install buildozer==1.5.0 cython==0.29.36 virtualenv
+
+      - name: Build APK
         run: |
           buildozer android debug
 
-      - name: Listar arquivos gerados
-        run: |
-          echo "Arquivos gerados:"
-          find . -name "*.apk" -type f
-
-      - name: Enviar APK como artefato
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: express-consumo-oc-apk-debug
+          name: express-consumo-oc-debug-apk
           path: bin/*.apk
